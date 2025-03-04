@@ -8,7 +8,7 @@
 
 typedef struct Arena Arena;
 struct Arena {
-	unsigned char* buffer;
+	unsigned char *buffer;
 	size_t length;
 	size_t curr_offset;
 	size_t prev_offset;
@@ -20,10 +20,10 @@ struct Arena_Header {
 };
 
 void init_arena(Arena *a, void *buffer, size_t length) {
-	a->buffer = (unsigned char *)buffer;
-	a->length = length;
-	a->curr_offset = 0;
-	a->prev_offset = 0;
+	a->buffer 		= (unsigned char *)buffer;
+	a->length 		= length;
+	a->curr_offset 	= 0;
+	a->prev_offset 	= 0;
 }
 
 bool is_power_of_two(size_t x) {
@@ -47,11 +47,11 @@ uintptr_t align_with_header(uintptr_t ptr, size_t align) {
 }
 
 void *arena_push(Arena *a, size_t size, size_t align) {
-	Arena_Header* header;
+	Arena_Header *header;
 
-	uintptr_t curr_ptr 			= (uintptr_t)a->buffer + (uintptr_t)a->curr_offset;
-	uintptr_t offset 			= align_with_header(curr_ptr, align);
-	uintptr_t relative_offset  	= offset - (uintptr_t)a->buffer;
+	uintptr_t curr_ptr = (uintptr_t)a->buffer + (uintptr_t)a->curr_offset;
+	uintptr_t offset = align_with_header(curr_ptr, align);
+	uintptr_t relative_offset = offset - (uintptr_t)a->buffer;
 
 	if (relative_offset + size <= a->length) {
 		header = (Arena_Header *)(offset - sizeof(Arena_Header));
@@ -62,22 +62,21 @@ void *arena_push(Arena *a, size_t size, size_t align) {
 		a->curr_offset = relative_offset + size;
 
 		memset(ptr, 0, size);
+
 		return ptr;
 	}
 
 	return NULL;
 }
 
-//Won't pop beyond 0 relative offset
 void arena_pop(Arena *a) {
 	if (a->curr_offset <= 0) {
 		std::cerr << "Arena is empty!" << std::endl;
-		return;
 	}
 
 	size_t clear_size = a->curr_offset - a->prev_offset;
 
-	Arena_Header *header = (Arena_Header *)(uintptr_t)a->buffer + (uintptr_t)a->prev_offset;
+	Arena_Header *header = (Arena_Header *)((uintptr_t)a->buffer + (uintptr_t)a->prev_offset);
 
 	a->curr_offset = a->prev_offset;
 	a->prev_offset = header->prev_offset;
@@ -89,20 +88,20 @@ int main() {
 	unsigned char buffer[256];
 	Arena a = {0};
 	init_arena(&a, buffer, 256);
+
 	int *five = (int *)arena_push(&a, sizeof(int), DEFAULT_ALIGNMENT);
+
+	//0
+	std::cout << *five << std::endl;
+
 	*five = 5;
 
-	//is 5
+	//5
 	std::cout << *five << std::endl;
 
 	arena_pop(&a);
 
-	//is 0
+	//0
 	std::cout << *five << std::endl;
-	
-	//Error: Arena is empty!
-	arena_pop(&a);
-	arena_pop(&a);
-
 	return 1;
 }
