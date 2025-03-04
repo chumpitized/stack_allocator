@@ -58,7 +58,7 @@ void *arena_push(Arena *a, size_t size, size_t align) {
 		header->prev_offset = a->prev_offset;
 
 		void *ptr = &a->buffer[relative_offset];
-		a->prev_offset = relative_offset;
+		a->prev_offset = relative_offset - sizeof(Arena_Header);
 		a->curr_offset = relative_offset + size;
 
 		memset(ptr, 0, size);
@@ -66,6 +66,17 @@ void *arena_push(Arena *a, size_t size, size_t align) {
 	}
 
 	return NULL;
+}
+
+void arena_pop(Arena *a) {
+	size_t clear_size = a->curr_offset - a->prev_offset;
+
+	Arena_Header *header = (Arena_Header *)(uintptr_t)a->buffer + (uintptr_t)a->prev_offset;
+
+	a->curr_offset = a->prev_offset;
+	a->prev_offset = header->prev_offset;
+
+	memset(header, 0, clear_size);
 }
 
 int main() {
@@ -76,6 +87,13 @@ int main() {
 	int *five = (int *)arena_push(&a, sizeof(int), DEFAULT_ALIGNMENT);
 	*five = 5;
 
+	//is 5
 	std::cout << *five << std::endl;
+
+	arena_pop(&a);
+
+	//is 0
+	std::cout << *five << std::endl;
+
 	return 1;
 }
