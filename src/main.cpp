@@ -68,7 +68,13 @@ void *arena_push(Arena *a, size_t size, size_t align) {
 	return NULL;
 }
 
+//Won't pop beyond 0 relative offset
 void arena_pop(Arena *a) {
+	if (a->curr_offset <= 0) {
+		std::cerr << "Arena is empty!" << std::endl;
+		return;
+	}
+
 	size_t clear_size = a->curr_offset - a->prev_offset;
 
 	Arena_Header *header = (Arena_Header *)(uintptr_t)a->buffer + (uintptr_t)a->prev_offset;
@@ -80,7 +86,6 @@ void arena_pop(Arena *a) {
 }
 
 int main() {
-	
 	unsigned char buffer[256];
 	Arena a = {0};
 	init_arena(&a, buffer, 256);
@@ -94,6 +99,10 @@ int main() {
 
 	//is 0
 	std::cout << *five << std::endl;
+	
+	//Error: Arena is empty!
+	arena_pop(&a);
+	arena_pop(&a);
 
 	return 1;
 }
